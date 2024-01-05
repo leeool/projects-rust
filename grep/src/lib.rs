@@ -6,42 +6,55 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     println!("{:?}", config.insen);
 
-    if config.insen {
-        for occurencie in search_insensitive(&config.query, &file) {
-            println!("{}", occurencie);
+    match config.insen {
+        true => {
+            let (occurrence, line_occurrence) = search_insensitive(&config.query, &file);
+            for (i, occ) in occurrence.iter().enumerate() {
+                println_colorized(occ, line_occurrence[i])
+            }
         }
-    } else {
-        for occurencie in search_sensitive(&config.query, &file) {
-            println!("{}", occurencie);
+        false => {
+            let (occurrence, line_occurrence) = search_sensitive(&config.query, &file);
+            for (i, occ) in occurrence.iter().enumerate() {
+                println_colorized(occ, line_occurrence[i]);
+            }
         }
     }
 
     Ok(())
 }
 
-fn search_sensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
-    let mut occurencies = Vec::new();
-
-    for line in content.lines() {
-        if line.contains(query) {
-            occurencies.push(line)
-        }
-    }
-
-    occurencies
+fn println_colorized(value: &str, line_value: usize) -> () {
+    println!("{} \x1b[93m{}\x1b[0m", line_value, value);
 }
 
-fn search_insensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
-    let mut occurencies = Vec::new();
-    let query = query.to_lowercase();
+fn search_sensitive<'a>(query: &str, content: &'a str) -> (Vec<&'a str>, Vec<usize>) {
+    let mut occurrences: Vec<&str> = Vec::new();
+    let mut line_occurrences: Vec<usize> = Vec::new();
 
-    for line in content.lines() {
-        if line.to_lowercase().contains(&query) {
-            occurencies.push(line)
+    for (pos, line) in content.lines().enumerate() {
+        if line.contains(query) {
+            occurrences.push(line);
+            line_occurrences.push(pos + 1);
         }
     }
 
-    occurencies
+    (occurrences, line_occurrences)
+}
+
+fn search_insensitive<'a>(query: &str, content: &'a str) -> (Vec<&'a str>, Vec<usize>) {
+    let mut line_occurrences: Vec<usize> = Vec::new();
+    let mut occurrences = Vec::new();
+    let query = query.to_lowercase();
+
+    for (pos, line) in content.lines().enumerate() {
+        if line.to_lowercase().contains(&query) {
+            occurrences.push(line);
+            line_occurrences.push(pos + 1);
+        }
+    }
+
+    (occurrences, line_occurrences)
 }
 
 #[derive(Debug, Default)]
@@ -96,7 +109,7 @@ Muitas vezes esta frase é atribuida a Sócrates:
 
         assert_eq!(
             vec!["'Conhece-te a ti mesmo'."],
-            search_sensitive(query, content)
+            search_sensitive(query, content).0
         );
     }
 
@@ -110,7 +123,21 @@ Muitas vezes esta frase é atribuida a Sócrates:
 
         assert_eq!(
             vec!["Muitas vezes esta frase é atribuida a Sócrates:"],
-            search_insensitive(query, content)
+            search_insensitive(query, content).0
+        );
+    }
+
+    #[test]
+    fn line_number() {
+        let content = "\
+Muitas vezes esta frase é atribuida a Sócrates:
+'Conhece-te a ti mesmo'.
+        ";
+        let query = "sócrates";
+
+        assert_eq!(
+            vec!["Muitas vezes esta frase é atribuida a Sócrates:"],
+            search_insensitive(query, content).0
         );
     }
 }
