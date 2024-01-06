@@ -1,7 +1,6 @@
+use grep::{run, Config};
 use std::env;
 use std::process;
-use grep::Config;
-use grep::run;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -19,4 +18,3 @@ fn main() {
         process::exit(1);
     });
 }
-

@@ -97,11 +97,7 @@ impl Config {
             }
         }
 
-        Ok(Config {
-            input: arguments.input,
-            query: arguments.query,
-            insen: arguments.insen,
-        })
+        Ok(Config { ..arguments })
     }
 }
 
