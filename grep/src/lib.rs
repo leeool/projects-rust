@@ -88,10 +88,10 @@ impl Config {
             ..Config::default()
         };
 
-        for i in 1..args.len() {
+        for i in 0..args.len() {
             match args[i].as_ref() {
-                "i" => arguments.input = args[i + 1].clone(),
-                "q" => arguments.query = args[i + 1].clone(),
+                "i" => arguments.input = args[i].clone(),
+                "q" => arguments.query = args[i].clone(),
                 "insen" => arguments.insen = true,
                 _ => (),
             }
