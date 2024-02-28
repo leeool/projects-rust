@@ -9,6 +9,7 @@ impl Config {
     pub fn new(args: Vec<String>) -> Result<Config, String> {
         let mut configs = Config::default();
         let mut flags: Vec<&str> = Vec::new();
+
         if args.is_empty() {
             return Err(String::from("Invalid args length"));
         };
@@ -16,17 +17,29 @@ impl Config {
         let full_args = args.join(" ");
         let chars = full_args.split("").skip(1).collect::<Vec<&str>>();
 
-        for i in 0..chars.len() {
-            if chars[i] != "-" {
+        let mut index = 0;
+        while index < chars.len() {
+            if chars[index] == "-" {
+                for j in index..chars.len() {
+                    if chars[j] == " " {
+                        break;
+                    }
+                    index += 1;
+                    flags.push(chars[j]);
+                }
                 continue;
             }
 
-            for j in i..chars.len() {
-                if chars[j] == " " {
-                    break;
+            if configs.directory.is_empty() {
+                for j in index..chars.len() {
+                    if chars[j] == " " {
+                        break;
+                    }
+                    configs.directory += chars[j];
                 }
-                flags.push(chars[j]);
             }
+
+            index += 1;
         }
 
         for flag in flags.iter() {
@@ -38,7 +51,6 @@ impl Config {
         }
 
         println!("{:?}", configs);
-
         todo!("should parse args return and config")
     }
 }
