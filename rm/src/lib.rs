@@ -50,7 +50,10 @@ impl Config {
             }
         }
 
-        println!("{:?}", configs);
-        todo!("should parse args return and config")
+        if configs.directory.is_empty() {
+            return Err(String::from("Directory missing"))
+        }
+
+        Ok(configs)
     }
 }

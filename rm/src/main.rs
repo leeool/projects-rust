@@ -8,5 +8,7 @@ fn main() -> Result<(), ()> {
         Err(e) => return Err(println!("{}", e)) 
     };
 
+    println!("{:?}", config);
+
     Ok(())
 }
