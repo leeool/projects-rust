@@ -1,3 +1,33 @@
+use std::fs;
+
+#[derive(Debug)]
+enum Modes {
+    Standard,
+    RecursivelyAndForce,
+    OnlyRecursively,
+    OnlyForce,
+}
+
+fn get_mode(config: Config) -> Modes {
+    if config.recursively && config.force {
+        Modes::RecursivelyAndForce
+    } else if config.force {
+        Modes::OnlyForce
+    } else if config.recursively {
+        Modes::OnlyRecursively
+    } else {
+        Modes::Standard
+    }
+}
+
+pub fn run(config: Config) -> Result<(), String> {
+    let mode = get_mode(config);
+
+    println!("{:?}", mode);
+
+    todo!("should remove folders and files")
+}
+
 #[derive(Default, Debug)]
 pub struct Config {
     pub directory: String,
@@ -51,7 +81,7 @@ impl Config {
         }
 
         if configs.directory.is_empty() {
-            return Err(String::from("Directory missing"))
+            return Err(String::from("Directory missing"));
         }
 
         Ok(configs)
