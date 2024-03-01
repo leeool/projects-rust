@@ -1,4 +1,5 @@
 use std::fs;
+use std::io::{stdin, stdout, Write};
 
 #[derive(Debug)]
 enum Modes {
@@ -8,7 +9,7 @@ enum Modes {
     OnlyForce,
 }
 
-fn get_mode(config: Config) -> Modes {
+fn get_mode(config: &Config) -> Modes {
     if config.recursively && config.force {
         Modes::RecursivelyAndForce
     } else if config.force {
@@ -21,11 +22,82 @@ fn get_mode(config: Config) -> Modes {
 }
 
 pub fn run(config: Config) -> Result<(), String> {
-    let mode = get_mode(config);
+    let mode = get_mode(&config);
 
-    println!("{:?}", mode);
+    match mode {
+        Modes::RecursivelyAndForce => Functions::recursively_and_force(config.directory),
+        Modes::OnlyForce => Functions::force(config.directory),
+        Modes::OnlyRecursively => Functions::recursively(config.directory)?,
+        Modes::Standard => Functions::standard(config.directory)?,
+    };
 
-    todo!("should remove folders and files")
+    Ok(())
+}
+
+struct Functions;
+
+impl Functions {
+    fn recursively_and_force(path: String) {
+        let is_directory = fs::metadata(&path).unwrap().is_dir();
+
+        if is_directory {
+            let _ = fs::remove_dir_all(path).is_ok();
+        } else {
+            let _ = fs::remove_file(path).is_ok();
+        }
+    }
+
+    fn force(path: String) {
+        let is_directory = fs::metadata(&path).unwrap().is_dir();
+
+        if is_directory {
+            let _ = fs::remove_dir(path).is_ok();
+        } else {
+            let _ = fs::remove_file(path).is_ok();
+        }
+    }
+
+    fn recursively(path: String) -> Result<(), String> {
+        let is_directory = fs::metadata(&path).unwrap().is_dir();
+        let auth = auth_operation(&path);
+
+        if !auth {
+            return Err(String::from("Operation canceled"));
+        }
+
+        if is_directory {
+            if let Err(e) = fs::remove_dir_all(path) {
+                return Err(e.kind().to_string());
+            }
+            Ok(())
+        } else {
+            if let Err(e) = fs::remove_file(path) {
+                return Err(e.kind().to_string());
+            }
+            Ok(())
+        }
+    }
+
+    fn standard(path: String) -> Result<(), String> {
+        let is_directory = fs::metadata(&path).unwrap().is_dir();
+        let auth = auth_operation(&path);
+
+        if !auth {
+            return Err(String::from("Operation canceled"));
+        }
+
+        if is_directory {
+            if let Err(e) = fs::remove_dir(path) {
+                return Err(e.kind().to_string());
+            }
+            Ok(())
+        } else {
+            if let Err(e) = fs::remove_file(path) {
+                return Err(e.kind().to_string());
+            }
+            Ok(())
+        }
+    }
 }
 
 #[derive(Default, Debug)]
@@ -86,4 +158,17 @@ impl Config {
 
         Ok(configs)
     }
+}
+
+fn auth_operation(path: &String) -> bool {
+    const LOWERCASE_Y_AS_BYTES: &[u8] = &[121, 10];
+    const UPPERCASE_Y_AS_BYTES: &[u8] = &[89, 10];
+
+    print!("remove directory: '{}'? (Y/n): ", path);
+    stdout().flush().unwrap();
+
+    let mut auth = String::new();
+    stdin().read_line(&mut auth).unwrap();
+
+    matches!(auth.as_bytes(), LOWERCASE_Y_AS_BYTES | UPPERCASE_Y_AS_BYTES)
 }
